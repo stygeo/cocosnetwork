@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src="//localhost:8080/socket.io/socket.io.js"></script>
+    <script src="/javascripts/cocos2d-beta2.min.js"></script>
+    </head>
+    <body>
+      <div id="cocos2d-demo" style="width: 640px; height: 480px;"></div>
+
+      <div id="d"></div>
+      <input id="msg" type="text">
+      <button id="btn">Send</button>
+
+      <script src="/javascripts/character.js"></script>
+      <script src="/javascripts/socket.js"></script>
+      <script src="/javascripts/game.js"></script>
+      <script>
+        $(function() {
+          Game.init(function(game) {
+            var nick      = "Anonymous-"+Math.round(Math.random() * 1000)
+            var character = new Character(nick);
+            var characters = {};
+
+            // Add character to the scene
+            game.addChar(character);
+
+            game.net.on('msg', function(data) {
+              console.log(data);
+              document.getElementById("d").innerHTML += "<p>"+data.name+": "+data.data+"</p>";
+            });
+            game.net.on('newCharacter', function(newCharacter) {
+              console.log("ev: 'newCharacter'");
+              characters[newCharacter.id] = newCharacter;
+
+              if(newCharacter.id !== character.name) {
+                console.log("Adding character. New: "+newCharacter.id+" character: "+character.name);
+                var c = new Character(newCharacter.id);
+                c.position = newCharacter.pos;
+              }
+            });
+            $("#btn").click(function() {
+              game.net.emit("broadcast", {name: character.name, data: $("#msg").val()});
+            });
+          });
+        });
+      </script>
+  </body>
+</html>
